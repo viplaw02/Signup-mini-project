@@ -74,9 +74,4 @@ exports.isStudent = (req,res,next)=>{
         }) 
     }
 }
-
-
-
-
-
-
+}
