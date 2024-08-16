@@ -3,16 +3,16 @@ const router = express.Router();
 const {SendOtp} = require('../controller/Auth');
 const {Signup,Login} = require('../controller/Auth')
 const {resetLink,resetPassword} = require('../controller/ResetPassword')
-const {isAdmin,isStudent} =  require('../middleware/Auth');
-app.get('/test',auth,(req,res)=>{
+const {Decode,isAdmin,isStudent} =  require('../middleware/Auth');
+app.get('/test',Decode,(req,res)=>{
     success:true
     message:'welcome to propected Routes'
 });
-app.get('/student',(req,res,next)=>{
+app.get('/student',Decode,isStudent,(req,res,next)=>{
     success:true
     message:"welcome to  student protected Route"
 })
-app.get('/admin',(req,res,next)=>{
+app.get('/admin',Decode,isAdmin,(req,res,next)=>{
     success:true
     message:"welcome to Admin protected Route"
 })
