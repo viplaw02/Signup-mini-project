@@ -67,13 +67,16 @@ exports.isStudent = (req,res,next)=>{
     });
 
     } catch (error) {
-        
+        console.error(error);
+        return res.status(HttpStatusCode.InternalServerError).json({
+            success:false,
+            message:"internal server error"
+        }) 
     }
 }
 
 
 
 
-exports.isStudent
 
 
