@@ -10,6 +10,12 @@ const {HttpStatusCode} = require('axios');
 exports.SendOtp = async (req, res) => {
     try {
         const { email } = req.body;
+        if(!email){
+           return res.status(HttpStatusCode.Unauthorized).json({
+                success:false,
+                message:"provide an email"
+            })
+        }
         const Isfoundemail = await Otp.findOne({ email });
 
         if (Isfoundemail) {
@@ -43,7 +49,7 @@ exports.SendOtp = async (req, res) => {
 
         return res.status(HttpStatusCode.Ok).json({
             success: true,
-            message: "OTP sent"
+            message: `OTP sent on ${email}`
         });
 
     } catch (error) {
@@ -54,13 +60,69 @@ exports.SendOtp = async (req, res) => {
         });
     }
 }
+//..................verify otp...............................///
+exports.verifyOtp = async (req, res) => {
+    try {
+        const { otp } = req.body; // Destructure otp from request body
+
+        if (otp === undefined || otp === null) {
+            return res.status(HttpStatusCode.BadRequest).json({ // Use BadRequest for missing OTP
+                success: false,
+                message: "OTP not provided. Please provide a valid OTP."
+            });
+        }
+       
+        // Convert the OTP from request to number
+        const otpNumber = Number(otp);
+
+        // Fetch the most recent OTP associated with the email
+        const recentOtp = await Otp.findOne({ otp: otpNumber }).sort({ createdAt: -1 }).limit(1);
+        
+        if (!recentOtp) {
+            return res.status(HttpStatusCode.NotFound).json({
+                success: false,
+                message: "OTP not found for the provided email."
+            });
+        }
+        
+        // Convert the OTP from database to number for comparison
+        const recentOtpNumber = Number(recentOtp.otp);
+
+        // Check if the provided OTP matches the most recent one
+        if (otpNumber !== recentOtpNumber) {
+            return res.status(HttpStatusCode.BadRequest).json({
+                success: false,
+                message: "Invalid OTP. Please provide a valid OTP."
+            });
+        }
+
+        // OTP is valid
+        return res.status(HttpStatusCode.Ok).json({
+            success: true,
+            message: "OTP verified successfully."
+        });
+
+    } catch (error) {
+        // Handle any errors that occur during the OTP verification process
+        console.error('Error verifying OTP:', error);
+        return res.status(HttpStatusCode.InternalServerError).json({
+            success: false,
+            message: "An error occurred while verifying the OTP. Please try again."
+        });
+    }
+};
+
+
 //.................Signup.........................................//
+
+
+
 exports.Signup = async (req, res) => {
     try {
-        const { FirstName, LastName, email, Password, ConfirmPassword,Role,otp } = req.body;
+        const { FirstName, LastName, email, Password, ConfirmPassword ,Gender,Role } = req.body;
         
         // Check if all fields are filled
-        if (!FirstName || !LastName || !email || !Password || !ConfirmPassword ||!otp ||!Role) {
+        if (!FirstName || !LastName || !email || !Password || !ConfirmPassword||!Gender||!Role) {
             return res.status(400).json({
                 success: false,
                 message: "Please fill all the data"
@@ -85,21 +147,7 @@ exports.Signup = async (req, res) => {
         }
 
         // Assuming you have an Otp model and a way to get the most recent OTP
-        const recentotp = await Otp.findOne({ email }).sort({ createdAt: -1 }).limit(1);
-        if (!recentotp) {
-            return res.status(HttpStatusCode.NotFound).json({
-                success: false,
-                message: "OTP not found"
-            });
-        }
-
-        // Check if the provided OTP matches the most recent one
-        if (req.body.otp !== recentotp.otp) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide a valid OTP"
-            });
-        }
+     
 
         // Create a new user
         const payload = new User({
